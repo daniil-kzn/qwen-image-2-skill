@@ -135,21 +135,21 @@ def check_prompt(prompt, endpoint, n_images, expansion):
             warn("several input images but the prompt never says which is image 1/2/3")
         if n_images > 1 and not re.search(r"(?i)\bonly\b|nothing else|只", prompt):
             warn("multi-image edit without 'take only ... / take nothing else from image N': "
-                 "the model may borrow background, colors or objects from the source (SKILL.md 4b)")
+                 "the model may borrow background, colors or objects from the source (image-edit-fidelity §3)")
         if not re.search(r"(?i)\b(keep|unchanged|do not change|don't change|preserve|stays? (exactly )?as it is|remains? the same)\b|保持|不要改变|请勿更改", prompt):
-            warn("edit prompt has no preservation clause (keep ... unchanged), see SKILL.md 4a")
+            warn("edit prompt has no preservation clause (keep ... unchanged), see image-edit-fidelity §2")
         elif not re.search(r"(?i)add or remove|添加或删除|增加或减少", prompt):
-            warn("edit prompt does not say 'Do not add or remove any people or objects' (SKILL.md 4a)")
+            warn("edit prompt does not say 'Do not add or remove any people or objects' (image-edit-fidelity §2)")
         if re.search(r"(?i)\b(everything else|the rest)\b", prompt) and not re.search(r"\d|\b(two|three|four|five|both)\b", prompt, re.I):
             warn("preservation clause is generic ('everything else'): name the people count and key objects from the inventory")
     elif refs:
         warn("text-to-image prompt mentions image N: did you mean an edit endpoint?")
     if re.search(PEOPLE_RE, prompt):
         if not is_edit and not re.search(r"(?i)\b(hand|hands|arm|arms)\b|手|臂", prompt):
-            warn("people in the prompt but no hand/arm placement: say what each hand does (SKILL.md 3a)")
+            warn("people in the prompt but no hand/arm placement: say what each hand does (image-edit-fidelity §1)")
         if not re.search(r"(?i)anatom|two arms|one head|解剖", prompt):
             warn("people in the prompt but no anatomy line ('anatomically correct bodies' or "
-                 "'one head, two arms and two legs for each person', SKILL.md 3a)")
+                 "'one head, two arms and two legs for each person', image-edit-fidelity §1)")
     if re.search(r"(?i)\b(8k|masterpiece|best quality|ultra hd|4k)\b", prompt):
         warn("quality tags (8K, masterpiece, ultra HD) push toward the AI look; describe instead")
     return chars, toks
