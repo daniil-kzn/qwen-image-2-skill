@@ -131,6 +131,7 @@ From the official edit-prompt enhancer and the 2.0 edit examples:
   Expression and makeup changes subtle, never exaggerated.
 - Style transfer: describe the target style by visible features (palette, line, texture,
   light), and put the style sentence after the content changes.
+- Moving one part from one reference into another: follow §4b strictly.
 - Multi-image: say which image supplies what ("the girl from image 1 wears the black dress
   from image 2 and sits in the pose from image 3"), which image gives the background, and
   describe each person's clothing and pose. The output aspect follows the last image: put the
@@ -250,6 +251,61 @@ frame and is free to "improve" it, so fidelity has to be asked for explicitly an
    one thing per retry.
 6. **Report** to the user what changed and confirm what was verified as kept; name any
    accepted deviation.
+
+### 4b. Transfer a part from one reference into another
+
+When the user asks to take one element from a source reference (a jacket, a lamp, a face, a
+logo, a sky) and put it into a target reference, exactly two things happen: the named element
+is copied from the source, and the named place in the target is replaced by it. Nothing else
+moves in either direction:
+- from the source, take ONLY the named element: not its background, other people or objects,
+  colors, lighting, style or framing;
+- in the target, change ONLY the named place: people, their count, faces, poses, clothing,
+  objects, setting, light, framing and text stay as in the target (§4a KEEP list built from the
+  target's inventory);
+- do not add anything "to make it fit" (extra props, shadows of objects that do not exist,
+  new people). The only allowed adaptation is the element itself taking the target's
+  perspective, scale and light so it sits naturally in the replaced place.
+
+How:
+1. Inventory the target (§4a) and describe the element in the source precisely (what, color,
+   material, shape, details that must survive: buttons, print, logo).
+2. Crop the source tightly around the element (at least 384 px per side) before uploading, so
+   the model has nothing else to borrow from it. Order: `[source crop, target]`, the target
+   LAST, so the output takes the target's size and aspect.
+3. Prompt structure (under 800 characters):
+   "Take only [element with key features] from image 1. In image 2, replace [exact place:
+   whose, which side, which object] with it, matching image 2's perspective, scale and light.
+   Take nothing else from image 1: not its background, people, colors or lighting. Everything
+   else in image 2 stays exactly as it is: [KEEP items from the target inventory, people count,
+   faces, poses, objects, setting, framing]. Do not add or remove any people or objects."
+4. Check with `ref_diff.py <target> <output> --allow <box of the replaced place>`: changes
+   outside the box are defects; repair with `--paste-back`. Also compare the transferred
+   element with the source crop: shape, color, print and details must match.
+
+**Head swap** (the head of a person from image 1 onto a person in image 2) is the strictest
+case of this rule. On the target person ONLY the head is replaced: face, facial features,
+skin of the face, hair and ears come from image 1; head angle, tilt, gaze direction, scale
+and the scene's light follow the target so the head sits on the existing neck. Everything
+else of the target person stays as in image 2: body, build, neck and shoulders, clothing,
+pose, hands, accessories below the head; other people keep their own heads and everything
+else; the setting, objects and framing do not change. Nothing from image 1 besides the head
+(its clothing, body, background, other people) appears in the output.
+- Before the call, settle the ambiguous parts with the user only if they exist: headwear,
+  glasses, earrings, beard, and whether the target's hairstyle or the source's is wanted
+  (default: everything that belongs to the head comes from image 1).
+- Source crop: head and hair only, from the top of the hair to the chin, at least 384 px.
+- Prompt: "Replace only the head of [target person: position, clothing] in image 2 with the
+  head of the person in image 1: same face, facial features, skin tone of the face, hairstyle
+  and hair color as in image 1. Keep the head angle, tilt and gaze of the person in image 2
+  and match image 2's light. Keep this person's body, neck, shoulders, clothing, pose and hands
+  from image 2 unchanged. Keep [other people: count, who] with their own faces, and [setting,
+  objects, framing] unchanged. One head, two arms, two legs. Take nothing else from image 1.
+  Do not add or remove any people or objects."
+- Check: `ref_diff.py <target> <output> --allow <box around the target head and hair>`; the
+  face matches image 1 side by side; the neck joins without a visible seam or a second neck;
+  exactly one head on that body; the other people unchanged. Repair drift outside the box with
+  `--paste-back`.
 
 ## 5. Workflow
 

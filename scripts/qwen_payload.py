@@ -133,7 +133,10 @@ def check_prompt(prompt, endpoint, n_images, expansion):
             err(f"prompt refers to image {max(refs)} but only {n_images} image(s) are attached")
         if n_images > 1 and not refs:
             warn("several input images but the prompt never says which is image 1/2/3")
-        if not re.search(r"(?i)\b(keep|unchanged|do not change|don't change|preserve)\b|保持|不要改变|请勿更改", prompt):
+        if n_images > 1 and not re.search(r"(?i)\bonly\b|nothing else|只", prompt):
+            warn("multi-image edit without 'take only ... / take nothing else from image N': "
+                 "the model may borrow background, colors or objects from the source (SKILL.md 4b)")
+        if not re.search(r"(?i)\b(keep|unchanged|do not change|don't change|preserve|stays? (exactly )?as it is|remains? the same)\b|保持|不要改变|请勿更改", prompt):
             warn("edit prompt has no preservation clause (keep ... unchanged), see SKILL.md 4a")
         elif not re.search(r"(?i)add or remove|添加或删除|增加或减少", prompt):
             warn("edit prompt does not say 'Do not add or remove any people or objects' (SKILL.md 4a)")
