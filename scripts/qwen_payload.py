@@ -26,8 +26,15 @@ PRESETS = {
 NEG_DEFAULT = ("low resolution, low quality, deformed limbs, malformed fingers, oversaturated "
                "colors, waxy skin, faces without detail, over-smoothed, AI-generated look, "
                "chaotic composition, blurry or distorted text")
+NEG_ANATOMY = ("extra limbs, extra arms, extra legs, extra hands, extra fingers, missing fingers, "
+               "two heads, extra head, extra eyes, fused bodies, limbs from torso, deformed hands, "
+               "malformed anatomy")
+NEG_DEFAULT = NEG_DEFAULT + ", " + NEG_ANATOMY
 NEG_EDIT = ("extra people, missing people, different person, changed background, added objects, "
-            "removed objects, different framing, different lighting")
+            "removed objects, different framing, different lighting, " + NEG_ANATOMY)
+PEOPLE_RE = (r"(?i)\b(person|people|man|men|woman|women|girl|boy|child|children|kid|baby|"
+             r"couple|family|crowd|player|model|bride|groom|teacher|student|he|she)\b"
+             r"|人|男|女|孩")
 EDIT_PROMPT_LIMIT = 800          # fal edit schema
 T2I_TOKEN_WARN = 1300            # Model Studio truncates after this many tokens
 NEG_LIMIT = 500
@@ -134,6 +141,12 @@ def check_prompt(prompt, endpoint, n_images, expansion):
             warn("preservation clause is generic ('everything else'): name the people count and key objects from the inventory")
     elif refs:
         warn("text-to-image prompt mentions image N: did you mean an edit endpoint?")
+    if re.search(PEOPLE_RE, prompt):
+        if not is_edit and not re.search(r"(?i)\b(hand|hands|arm|arms)\b|手|臂", prompt):
+            warn("people in the prompt but no hand/arm placement: say what each hand does (SKILL.md 3a)")
+        if not re.search(r"(?i)anatom|two arms|one head|解剖", prompt):
+            warn("people in the prompt but no anatomy line ('anatomically correct bodies' or "
+                 "'one head, two arms and two legs for each person', SKILL.md 3a)")
     if re.search(r"(?i)\b(8k|masterpiece|best quality|ultra hd|4k)\b", prompt):
         warn("quality tags (8K, masterpiece, ultra HD) push toward the AI look; describe instead")
     return chars, toks

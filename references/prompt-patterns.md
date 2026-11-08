@@ -16,9 +16,24 @@ or none]. [Hair color, length, cut]. She wears [top, fabric], [bottom], [shoes],
 She [posture], [head tilt], looking [at the camera / toward the left edge of the frame],
 [what the right hand does], [what the left hand does]. Behind her [setting with 2-3 concrete
 objects]. [Light source and direction], [color temperature], natural tones, unpretentious
-composition, [shot size: medium close-up], shallow depth of field. The image contains no
-recognizable text.
+composition, [shot size: medium close-up], shallow depth of field. Anatomically correct body
+with natural proportions: one head, two arms, two hands with five fingers each. The image
+contains no recognizable text.
 ```
+
+### Several people
+
+```
+Exactly [N] people, each with one head, two arms and two legs, anatomically correct with
+natural proportions. On the left, [person 1: identity, clothing]; her right hand [action], her
+left arm [position]; standing with weight on the right leg. In the center, [person 2] ...; his
+left hand rests on the shoulder of the woman on the left, his right hand [action]. On the
+right, [person 3] ... They stand about [distance] apart, bodies not overlapping except where
+described.
+```
+
+Keep hands visible or clearly hidden (pockets, behind the back, out of frame), avoid
+interlaced arms and people standing directly behind one another.
 
 Gaze and movement directions are anchored to the frame ("toward the right edge of the
 picture"), not to the subject's own left or right.
@@ -117,7 +132,7 @@ bleed into rice paper. No seals, no colophon, no modern elements.
 Keep each instruction under 800 characters on fal edit endpoints. With a reference image,
 append a KEEP clause built from the reference inventory (SKILL.md §4a), for example:
 
-`Change the sofa upholstery to dark green velvet. Keep exactly three people: the girl sitting on the left armrest in a yellow sweater, the man in the middle with a laptop, the boy on the floor on the right with a dog; same faces, poses and places. Keep the floor lamp on the left, the two framed posters on the wall, the coffee table with a teapot and two mugs, the window light from the right, the framing and the camera angle unchanged. Do not add or remove any people or objects.`
+`Change the sofa upholstery to dark green velvet. Keep exactly three people: the girl sitting on the left armrest in a yellow sweater, the man in the middle with a laptop, the boy on the floor on the right with a dog; same faces, poses and places. Keep the floor lamp on the left, the two framed posters on the wall, the coffee table with a teapot and two mugs, the window light from the right, the framing and the camera angle unchanged. Same natural anatomy for every person: one head, two arms, two legs. Do not add or remove any people or objects.`
 
 Short forms below use "keep everything else unchanged" only for brevity; in real edits
 replace it with the named KEEP items.
@@ -136,7 +151,12 @@ replace it with the named KEEP items.
 - Cross-domain: `Use the city photo in image 1 as the base. Do not change the real buildings, streets, vehicles or people; keep the photo realistic. Add three of the cartoon characters from image 2: one lying on top of the building, one peeking from its right side, one sitting on the square in front. Flat graphic style with clear outlines, like a mural.`
 - Colorize: `Restore and colorize the photo.`
 
+- Hand fix (on a crop around the hand, then paste back): `Correct the left hand of the woman: one hand with five fingers in a natural relaxed pose, holding the white cup by its handle; keep the cup, sleeve, skin tone and lighting unchanged.`
+
 ## 10. Negative prompts
+
+Anatomy list, appended to every negative prompt below by `qwen_payload.py`:
+`extra limbs, extra arms, extra legs, extra hands, extra fingers, missing fingers, two heads, extra head, extra eyes, fused bodies, limbs from torso, deformed hands, malformed anatomy`
 
 Text-to-image, English (official list, translated):
 `low resolution, low quality, deformed limbs, malformed fingers, oversaturated colors, waxy skin, faces without detail, over-smoothed, AI-generated look, chaotic composition, blurry or distorted text`

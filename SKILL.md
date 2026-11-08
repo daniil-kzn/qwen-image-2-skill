@@ -1,6 +1,6 @@
 ---
 name: qwen-image-2
-description: Generate and edit images with Qwen-Image-2.0 (Alibaba, Feb 2026; one model for text-to-image and editing, native 2K, strong Chinese/English text rendering) through fal.ai (`fal-ai/qwen-image-2/...`) or Alibaba Model Studio (`qwen-image-2.0`, `qwen-image-2.0-pro`). Covers the availability check, tier and endpoint choice, explicit 2K sizes, prompts written by the official Qwen rewriting rules, exact quoted text for posters/slides/infographics/comics/calendars, edit instructions with image 1/2/3 references, strict fidelity to attached references (inventory of people, objects and setting, change only what was asked, pixel diff against the reference, paste-back repair), prompt-expansion and negative-prompt settings, and a defect check before showing. Use whenever the user names Qwen for pictures ("сгенерируй в Qwen", "сделай постер через квен", "отредактируй фото в Qwen Image 2", "qwen image 2 pro", "квен 2"), or picks Qwen-Image for an image that must carry exact rendered text (poster, slide, infographic, menu, comic with speech bubbles), even if the user does not say "2.0".
+description: Generate and edit images with Qwen-Image-2.0 (Alibaba, Feb 2026; one model for text-to-image and editing, native 2K, strong Chinese/English text rendering) through fal.ai (`fal-ai/qwen-image-2/...`) or Alibaba Model Studio (`qwen-image-2.0`, `qwen-image-2.0-pro`). Covers the availability check, tier and endpoint choice, explicit 2K sizes, prompts written by the official Qwen rewriting rules, exact quoted text for posters/slides/infographics/comics/calendars, edit instructions with image 1/2/3 references, strict fidelity to attached references (inventory of people, objects and setting, change only what was asked, pixel diff against the reference, paste-back repair), intact human anatomy for every person (one head, two arms, two legs, five fingers per hand, no limbs from the torso, no fused bodies), prompt-expansion and negative-prompt settings, and a defect check before showing. Use whenever the user names Qwen for pictures ("сгенерируй в Qwen", "сделай постер через квен", "отредактируй фото в Qwen Image 2", "qwen image 2 pro", "квен 2"), or picks Qwen-Image for an image that must carry exact rendered text (poster, slide, infographic, menu, comic with speech bubbles), even if the user does not say "2.0".
 ---
 
 # Qwen-Image-2.0
@@ -61,7 +61,8 @@ accepted image including retries, not the price of one output.
 - **Negative prompt**, at most 500 characters. Text-to-image default (the official Qwen list):
   `low resolution, low quality, deformed limbs, malformed fingers, oversaturated colors, waxy
   skin, faces without detail, over-smoothed, AI-generated look, chaotic composition, blurry or
-  distorted text`. Edits: the fidelity list from §4a (the payload script's edit default;
+  distorted text`, plus the anatomy list from §3a. Edits: the fidelity list from §4a plus the
+  anatomy list (the payload script's edit default;
   `--negative blank` sends `" "`), plus the failure you actually saw (`altered face`,
   `misspelled text`). Exclusions go here; the positive prompt does not list objects with "no".
 - **Prompt length.** fal edit: 800 characters (schema). fal text-to-image: no limit in the
@@ -145,6 +146,50 @@ From the official edit-prompt enhancer and the 2.0 edit examples:
   "Extend the image beyond its boundaries using outpainting. The original caption is: ...")
   are not yet verified on 2.0.
 
+## 3a. Human anatomy: always intact
+
+Every person in every output has normal human anatomy: exactly one head, two eyes, one nose,
+one mouth, two ears, one neck, two arms attached at the shoulders, two hands with five fingers
+each, two legs attached at the hips, two feet. No extra or missing heads, limbs, hands or
+fingers; no limbs growing from the back, chest, belly or another person; no fused bodies; no
+joints bending the wrong way. This applies to text-to-image and edits, to background people
+and to stylized images (cartoon, comic, painting) unless the user explicitly asks for a
+non-human creature. An image with a broken body is a defect, however good the rest is.
+
+Why it breaks: diffusion models lose track of whose limb is whose where bodies overlap
+(hugging, holding hands, crowds, a person carrying a child), where hands are small or hidden,
+and in complex poses. Prevent it in the prompt and catch it in the check.
+
+1. **Prompt.** For each person say where each arm and hand is and what it does ("her right hand
+   holds a cup at chest height, her left arm hangs relaxed at her side"), and where the legs are
+   ("standing, weight on the left leg", "sitting with legs crossed"). Name the body count when
+   there are several people ("exactly three people, each with one head, two arms and two
+   legs"). Write natural anatomy into the style sentence: "anatomically correct human bodies,
+   natural proportions". Describe contact precisely: whose hand rests on whose shoulder.
+2. **Composition that keeps bodies readable.** Prefer poses where both hands are visible or
+   clearly hidden (in pockets, behind the back, out of frame); avoid tangles of interlaced
+   arms, people standing directly behind one another, and limbs cut ambiguously by the frame.
+   More people means smaller bodies and more errors: keep the count as low as the request
+   allows; in crowds keep background people small, simple and partly occluded by clear objects.
+3. **Negative prompt** always carries the anatomy list (the payload script adds it): `extra
+   limbs, extra arms, extra legs, extra hands, extra fingers, missing fingers, two heads, extra
+   head, extra eyes, fused bodies, limbs from torso, deformed hands, malformed anatomy`.
+4. **Edits.** Changing a pose, clothing or adding a person must not add or lose body parts: put
+   "same anatomy: one head, two arms, two legs for each person" into the KEEP clause (§4a).
+   A pose edit is the highest-risk edit; check every person in the frame, not only the edited
+   one.
+5. **Check every person before showing** (crop and zoom each body to full size; small
+   background figures included): count heads, eyes, arms, hands, legs, feet; count fingers on
+   every visible hand; trace each limb to its shoulder or hip and confirm it belongs to the
+   right body; look for limbs growing from the back, chest or neck, merged hands, a third leg
+   between two people, twisted joints. Write the count per person into the check notes
+   ("P1: 1 head, 2 arms, 2 hands 5+5, 2 legs: OK").
+6. **Fix.** A small hand or finger error: an edit pass on a crop around that hand ("correct the
+   left hand: five fingers, natural pose, holding the cup"), then paste the crop back
+   (`ref_diff.py --paste-back`). An extra or missing limb or head: regenerate with a simpler
+   pose, fewer overlaps and the limb description from step 1. Never show an image with a
+   broken body as a finished result; if the user wants to see a draft anyway, name the defect.
+
 ## 4a. Reference fidelity: change only what was asked
 
 Whenever the user attaches a reference image, the reference is the ground truth and the
@@ -188,7 +233,8 @@ frame and is free to "improve" it, so fidelity has to be asked for explicitly an
      is called by its number in the prompt; attach only references that the change needs,
      each extra image is another source of drift.
    - Negative prompt for edits: `extra people, missing people, different person, changed
-     background, added objects, removed objects, different framing, different lighting`.
+     background, added objects, removed objects, different framing, different lighting`, plus
+     the anatomy list from §3a.
    - Standard tier for drafts; one output per call until the instruction holds, then 2-3.
 4. **Check against the reference, not on its own.** Run
    `scripts/ref_diff.py <reference> <output> --allow x0,y0,x1,y1` (the box where the change was
@@ -229,7 +275,10 @@ frame and is free to "improve" it, so fidelity has to be asked for explicitly an
 - Every quoted string character by character at full size (crop and zoom small text with PIL):
   spelling, digits, dates, punctuation, line breaks; no invented extra text, no duplicates.
 - Layout: row and column counts, cell order, alignment, nothing cut by the frame edge.
-- People and objects: counts, hands and fingers, gaze targets, anatomy, who stands where.
+- Anatomy of every person, background figures included (§3a): one head, two eyes, two arms,
+  two hands with five fingers, two legs, every limb attached to its own body at the shoulder or
+  hip, no fused bodies. Any violation fails the image.
+- People and objects: counts, gaze targets, who stands where.
 - Edits: `ref_diff.py` against the reference, then every line of `reference_inventory.md`
   (people count and identity, objects and positions, background, light, framing, text); output
   pixel size and aspect equal to the reference.
